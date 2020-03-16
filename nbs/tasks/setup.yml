@@ -19,5 +19,29 @@
   include_vars:
       dir: "/etc/nbs/vars"
 
-- name:
-  debug: var=nbs_root
+- include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+
+- name: Install packages
+  package:
+    name: "{{ item }}"
+    state: installed
+  with_items: "{{ nbs_packages }}"
+
+- name: Create directory for PXEboot related files
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items: 
+    - "{{ nbs_root_directory }}"
+    - "{{ nbs_iso_directory }}"
+    - "{{ nbs_etc_directory }}"
+    - "{{ nbs_etc_directory }}/pxe"
+    - "{{ nbs_web_directory }}"
+    - "{{ nbs_shares_directory }}"
+    - "{{ nbs_tftp_root_directory }}"
+    - "{{ nbs_pxe_path }}/pxelinux.cfg"
+
+

@@ -1,0 +1,34 @@
+# roles/nbs/vars/Centos.yml
+---
+
+nbs_dhcp_service: dhcpd
+nbs_tftp_service: xinetd
+
+nbs_packages:
+  - nfs-utils
+  - rsync
+  - httpd
+  - shim
+  - syslinux
+  - dhcp
+  - libsemanage-python
+  - tftp-server
+  - xinetd
+  - samba
+
+nbs_services:
+  - smb
+  - rpcbind
+  - nfs-server
+  - '{{nbs_dhcp_service}}'
+  - '{{nbs_tftp_service}}'
+
+
+nbs_pxeserver_files:
+  - /usr/share/syslinux/pxelinux.0
+  - /usr/share/syslinux/menu.c32
+  - /boot/efi/EFI/BOOT/BOOTX64.EFI
+
+nbs_dhcp_config_dir: /etc/dhcp
+nbs_dhcp_config: /etc/dhcp/dhcpd.conf
+nbs_tftp_config: /etc/xinetd.d/tftp
