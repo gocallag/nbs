@@ -1,0 +1,23 @@
+# roles/nbs/tasks/setup.yml
+---
+- name: Create the seed system config file
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items: 
+    - "/etc/nbs"
+    - "/etc/nbs/vars"
+
+- name: set nbs root
+  copy:
+     dest: "/etc/nbs/vars/00root.yml"
+     content: |
+        nbs_root: "{{ prefix }}"
+  when: prefix is defined
+
+- name: include all the system vars
+  include_vars:
+      dir: "/etc/nbs/vars"
+
+- name:
+  debug: var=nbs_root

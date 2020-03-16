@@ -1,0 +1,16 @@
+#!/bin/bash
+PREFIX=/srv/nbs
+for i in "$@"
+do
+  case $i in
+    -p=*|--prefix=*)
+	        PREFIX="${i#*=}"
+		    ;;
+    *)
+	    echo "unknown option"
+	    exit 1
+   ;;
+  esac
+done
+cd ..
+ansible-playbook -e "prefix=$PREFIX driver=setup" driver.yml
