@@ -1,36 +1,24 @@
 #!/bin/bash
-if [ "$1" == "" ]; then
-   echo "Need an iso or a location of an iso"
-   exit 1
-fi
-source /etc/nbs/config 2>/dev/null
-if [ $? -ne 0 ]; then
-   echo "Couldn't load variable file"
-   exit 1
-fi
-mkdir -p "${nbs_root}/etc/vars/cds"
-echo 
 for i in "$@"
 do
   case $i in
-    -p=*|--prefix=*)
-	        PREFIX="${i#*=}"
+    -n=*|--osname=*)
+	        OSNAME="${i#*=}"
 		    ;;
-    -s=*|--searchpath=*)
-		    SEARCHPATH="${i#*=}"
-	        ;;
-    -l=*|--lib=*)
-	        DIR="${i#*=}"
-	    ;;
-    --default)
-	    DEFAULT=YES
-        ;;
+    -a=*|--arch=*)
+	        ARCH="${i#*=}"
+		    ;;
     *)
-            # unknown option
+	        ISO="${i#*=}"
    ;;
   esac
 done
-echo PREFIX = ${PREFIX}
-echo SEARCH PATH = ${SEARCHPATH}
-echo DIRS = ${DIR}
-echo DEFAULT = ${DEFAULT}
+echo "$OSNAME"
+echo "$ARCH"
+echo "$ISO"
+if [ "$OSNAME" == "" ] || [ "$ARCH" == "" ]; then
+	echo "Both -n (osname) and -a (arch) are required"
+	exit 1
+fi
+cd ..
+ansible-playbook -e "osname=$OSNAME arch=$ARCH iso=$ISO driver=copycds" driver.yml

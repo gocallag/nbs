@@ -1,0 +1,21 @@
+---
+
+- name: include all the system vars
+  include_vars:
+      dir: "/etc/nbs/vars"
+
+- include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+
+- name: Create directories for boot images
+  file:
+    path: "{{ nbs_pxe_path }}/{{ osname }}_{{ arch }}"
+    state: directory
+
+- name: Download isos
+  get_url:
+    url: "{{ iso }}"
+    dest: "{{ nbs_iso_directory }}/"
+
