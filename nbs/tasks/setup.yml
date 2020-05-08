@@ -1,18 +1,40 @@
 # roles/nbs/tasks/setup.yml
 ---
+- name: Ensure group "nbs" exists
+  group:
+     name: nbs
+     state: present
+
 - name: Create the seed system config file
   file:
     path: "{{ item }}"
     state: directory
+    owner: root
+    group: nbs
+    mode: 0770
   with_items: 
     - "/etc/nbs"
     - "/etc/nbs/vars"
+    - "/etc/nbs/state"
+    - "/etc/nbs/state/nodes"
+    - "/etc/nbs/state/site"
+    - "/etc/nbs/state/isos"
+
+- name: set prefix
+  set_fact:
+     nbs_root: "{{ prefix }}"
 
 - name: set nbs root
   copy:
      dest: "/etc/nbs/vars/00root.yml"
      content: |
         nbs_root: "{{ prefix }}"
+        nbs_iso:  '{{ nbs_root }}/iso'
+        nbs_etc:  '{{ nbs_root }}/etc'
+        nbs_web:  '{{ nbs_root }}/www'
+        nbs_shares:  '{{ nbs_root }}/shares'
+        nbs_tftp:  '{{ nbs_root }}/tftp'
+        nbs_pxe: "{{ nbs_root }}/tftp"
   when: prefix is defined
 
 - name: include all the system vars
@@ -35,13 +57,91 @@
     path: "{{ item }}"
     state: directory
   with_items: 
-    - "{{ nbs_root_directory }}"
-    - "{{ nbs_iso_directory }}"
-    - "{{ nbs_etc_directory }}"
-    - "{{ nbs_etc_directory }}/pxe"
-    - "{{ nbs_web_directory }}"
-    - "{{ nbs_shares_directory }}"
-    - "{{ nbs_tftp_root_directory }}"
-    - "{{ nbs_pxe_path }}/pxelinux.cfg"
+    - "{{ nbs_root }}"
+    - "{{ nbs_iso }}"
+    - "{{ nbs_etc }}"
+    - "{{ nbs_etc }}/pxe"
+    - "{{ nbs_web }}"
+    - "{{ nbs_shares }}"
+    - "{{ nbs_tftp }}"
+    - "{{ nbs_pxe }}/pxelinux.cfg"
+    - "{{ nbs_pxe }}/vmware"
+    - "{{ nbs_pxe }}/windows"
+    - "{{ nbs_pxe }}/redhat"
 
+- name: ensure base variable files exist
+  copy:
+    content: "---\n{{ item }}:\n"
+    dest: "/etc/nbs/state/{{ item }}/00"
+    force: yes
+    group: nbs
+    owner: root
+    mode: 0770
+  with_items: 
+    - "isos"
 
+- name: ensure base nbs var files exist
+  copy:
+    content: "---\n{{ item }}:\n"
+    dest: "/etc/nbs/vars/{{ item }}.yml"
+    force: yes
+    group: nbs
+    owner: root
+    mode: 0770
+  with_items: 
+    - "isos"
+
+- name: Install XINETD TFTP configuration file
+  template:
+    dest: "{{ nbs_tftp_config }}"
+    src: etc_xinetd.d_tftp.j2
+
+- name: force restart of xinetd
+  service:
+     name: xinetd
+     state: restarted
+
+- name: Set config directory perms for DHCP
+  file:
+    path: "{{ nbs_dhcp_config | dirname }}"
+    state: directory
+    mode: 0755
+
+- name: Install DHCP config file for NBS
+  template:
+    src: etc_dhcp_dhcpd.conf.j2
+    dest: "{{ nbs_dhcp_config }}"
+    owner: root
+    group: root
+    mode: 0644
+    validate: 'dhcpd -t -cf %s'
+
+- name: DHCP configuration for PXE server
+  template:
+    src: etc_dhcp_dhcpd-pxelinux.conf.j2
+    dest: '{{ nbs_etc }}/pxe/base-dhcpd-pxe.conf'
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Load PXELinux DHCP configuration from main DHCP config file
+  lineinfile:
+    dest: /etc/dhcp/dhcpd.conf
+    line: 'include "{{ nbs_etc }}/dhcpd-pxe.conf";'
+
+- name: assemble pxe config
+  assemble:
+    src: "{{ nbs_etc }}/pxe"
+    dest: "{{ nbs_etc }}/dhcpd-pxe.conf"
+  notify: restart dhcp
+
+- name: force restart of dhcpd
+  service:
+     name: dhcpd
+     state: restarted
+
+- name: Make Network Boot Programs for BIOS and UEFI based systems available
+  command: cp "{{ item }}" "{{ nbs_pxe }}/{{ item|regex_replace('.*/', '') }}"
+  args:
+    creates: "{{ nbs_pxe }}/{{ item|regex_replace('.*/', '') }}"
+  with_items: "{{ nbs_pxeserver_files }}"

@@ -1,0 +1,32 @@
+---
+
+- name: restart httpd
+  service:
+    name: httpd
+    state: restarted
+  listen: "restart dhcp"
+
+  #- name: restart nfs
+  #service:
+  #  name: nfs
+  #  state: restarted
+  #listen: "restart dhcp"
+
+- name: restart tftp
+  service:
+    name: "{{ nbs_tftp_service }}"
+    state: restarted
+  listen: "restart dhcp"
+
+
+- name: assemble pxe config
+  assemble:
+    src: "{{ nbs_etc_directory }}/pxe"
+    dest: "{{ nbs_etc_directory }}/dhcpd-pxe.conf"
+  listen: "restart dhcp"
+
+- name: restart dhcp
+  service:
+     name: "{{ nbs_dhcp_service }}"
+     state: restarted
+  listen: "restart dhcp"

@@ -1,0 +1,29 @@
+#!/bin/bash
+for i in "$@"
+do
+  case $i in
+    -n=*|--osname=*)
+	        OSNAME="${i#*=}"
+		    ;;
+    -a=*|--arch=*)
+	        ARCH="${i#*=}"
+		    ;;
+    -o=*|--ostype=*)
+	        OST="${i#*=}"
+		    ;;
+    *)
+	        ISO="${i#*=}"
+   ;;
+  esac
+done
+if [ "$OSNAME" == "" ] || [ "$ARCH" == "" ] || [ "$OST" == "" ]; then
+	echo "-n (osname) , -a (arch) and -o (ostype) are required"
+	exit 1
+fi
+cat > /etc/nbs/state/isos/${OSNAME}_$ARCH.frag <<EOF
+ - osname: ${OSNAME}
+   osarch: ${ARCH}
+   osiso:  ${ISO}
+   ostype:  ${OST}
+   osfstype: iso9660
+EOF

@@ -12,5 +12,4 @@ do
    ;;
   esac
 done
-cd ..
 ansible-playbook -e "prefix=$PREFIX driver=setup" driver.yml

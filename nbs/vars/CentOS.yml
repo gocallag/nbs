@@ -9,9 +9,8 @@ nbs_packages:
   - rsync
   - httpd
   - shim
-  - syslinux
-  - dhcp
-  - libsemanage-python
+  - http://mirror.centos.org/centos/7/os/x86_64/Packages/syslinux-4.05-15.el7.x86_64.rpm
+  - dhcp-server
   - tftp-server
   - xinetd
   - samba
@@ -20,15 +19,19 @@ nbs_services:
   - smb
   - rpcbind
   - nfs-server
-  - '{{nbs_dhcp_service}}'
-  - '{{nbs_tftp_service}}'
+  - '{{ nbs_dhcp_service }}'
+  - '{{ nbs_tftp_service }}'
 
 
 nbs_pxeserver_files:
   - /usr/share/syslinux/pxelinux.0
   - /usr/share/syslinux/menu.c32
+    #  - /usr/share/syslinux/ldlinux.c32
+    #  - /usr/share/syslinux/libutil.c32
   - /boot/efi/EFI/BOOT/BOOTX64.EFI
 
 nbs_dhcp_config_dir: /etc/dhcp
 nbs_dhcp_config: /etc/dhcp/dhcpd.conf
 nbs_tftp_config: /etc/xinetd.d/tftp
+
+nbs_server_ip: "10.0.255.254"

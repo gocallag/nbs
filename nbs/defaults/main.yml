@@ -1,0 +1,6 @@
+# roles/nbs/defaults/main.yml
+---
+
+nbs_tftp_server_args: "--secure"
+
+

@@ -11,11 +11,46 @@
 
 - name: Create directories for boot images
   file:
-    path: "{{ nbs_pxe_path }}/{{ osname }}_{{ arch }}"
+    path: "{{ nbs_tftp }}/{{ osname }}_{{ arch }}"
     state: directory
 
 - name: Download isos
   get_url:
     url: "{{ iso }}"
-    dest: "{{ nbs_iso_directory }}/"
+    dest: "{{ nbs_iso }}/"
+  register: name
 
+- name: debug
+  debug: var=name
+
+- name: Create temporary directories for boot image mounts
+  file:
+    path: "/tmp/nbs/{{ osname }}_{{ arch }}"
+    state: directory
+  
+- name: Mount the ISO file
+  mount:
+    path: "/tmp/nbs/{{ osname }}_{{ arch }}"
+    src: "{{ name.dest }}"
+    fstype: "{{ 'iso9660' | default('iso9660')}}"
+    opts: loop,ro
+    state: mounted
+
+- name: copy iso contents
+  synchronize:
+    src: "/tmp/nbs/{{ osname }}_{{ arch }}"
+    dest: "{{ nbs_tftp }}/"
+
+- name: UnMount the ISO file
+  mount:
+    path: "/tmp/nbs/{{ osname }}_{{ arch }}"
+    src: "{{ name.dest }}"
+    state: absent
+
+- name: Symlink the iso for web access
+  file:
+    src: "{{ nbs_tftp }}//{{ osname }}_{{ arch }}"
+    dest: "{{ nbs_web }}/{{ osname }}_{{ arch }}"
+    owner: root
+    group: root
+    state: link

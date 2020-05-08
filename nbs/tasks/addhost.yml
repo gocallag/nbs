@@ -1,0 +1,79 @@
+# roles/nbs/tasks/addhost.yml
+---
+
+- include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+  tags: nbs
+
+- name: Install DHCP config file for new host
+  template:
+    src: etc_dhcp_host.conf.j2
+    dest: "{{ nbs_etc_directory }}/pxe/{{ mac }}.txt"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart dhcp
+  tags: nbs
+
+- name: Remove tftp config for MAC
+  file:
+    path: "{{ nbs_root_directory }}/tftp/pxelinux.cfg/01-{{mac|lower|regex_replace(':','-')}}"
+    state: absent
+
+- name: Remove dhcp config for MAC 
+  file:
+    path: "{{ nbs_etc_directory }}/pxe/{{ mac }}.txt"
+    state: absent
+
+- name: add the pxelinux.cfg/mac address file for this host
+  template:
+    src: esxi67_pxelinux.cfg.j2
+    dest: "{{ nbs_root_directory }}/tftp/pxelinux.cfg/01-{{mac|lower|regex_replace(':','-')}}"
+    owner: root
+    group: root
+    mode: 0644
+  when: flavour == 'vmware'
+  tags: nbs
+
+- name: add the pxelinux.cfg/mac address file for this centos7 host
+  template:
+    src: centos7_pxelinux.cfg.j2
+    dest: "{{ nbs_root_directory }}/tftp/pxelinux.cfg/01-{{mac|lower|regex_replace(':','-')}}"
+    owner: root
+    group: root
+    mode: 0644
+  when: flavour == 'centos'
+  tags: nbs
+
+- name: add the pxelinux.cfg/mac address file for this windows host
+  template:
+    src: windows_pxelinux.cfg.j2
+    dest: "{{ nbs_root_directory }}/tftp/pxelinux.cfg/01-{{mac|lower|regex_replace(':','-')}}"
+    owner: root
+    group: root
+    mode: 0644
+  when: flavour == 'windows'
+  tags: nbs
+
+
+- name: add the kickstart file for this ESXi host
+  template:
+    src: esxi67_kickstart.j2
+    dest: "{{ nbs_web_directory }}/{{image}}-{{name}}.ks"
+    owner: root
+    group: root
+    mode: 0644
+  when: flavour == 'vmware'
+  tags: nbs
+
+- name: add the kickstart file for this Centos7 host
+  template:
+    src: centos7_kickstart.j2
+    dest: "{{ nbs_web_directory }}/{{image}}-{{name}}.ks"
+    owner: root
+    group: root
+    mode: 0644
+  when: flavour == 'centos'
+  tags: nbs

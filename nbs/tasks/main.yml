@@ -1,0 +1,108 @@
+# roles/nbs/tasks/main.yml
+---
+
+- name: Assemble isos from fragments
+  assemble:
+     src: /etc/nbs/state/isos
+     dest: /etc/nbs/state/isos.yml
+
+- name: checksum current isos
+  stat:
+     path: /etc/nbs/vars/isos.yml
+     checksum_algorithm: sha256
+  register: ciso
+
+- name: checksum proposed isos
+  stat:
+     path: /etc/nbs/state/isos.yml
+     checksum_algorithm: sha256
+  register: piso
+
+- name: refresh iso's
+  set_fact:
+     refresh_iso: "{{ piso.stat.checksum != ciso.stat.checksum if true else false }}"
+
+- name: Refresh ISO's
+  block:
+  - name: Copy over new ISO's yaml file
+    copy:
+      src: "/etc/nbs/state/isos.yml"
+      dest: "/etc/nbs/vars/isos.yml"
+  when: refresh_iso == true
+
+- name: Re-include all the system vars
+  include_vars:
+     dir: "/etc/nbs/vars"
+
+- name: Refresh ISO's
+  block:
+  - name: import iso
+    include_tasks: 
+      file: importiso.yml
+    with_items: "{{ isos }}"
+  when: refresh_iso == true
+
+#
+##- name: Install iPXE undionly
+##  copy:
+##    src: "/usr/share/ipxe/undionly.kpxe"
+##    dest: "{{ nbs_tftp_root_directory }}/"
+##  tags: nbs
+#
+#
+#
+#- name: assemble pxe config
+#  assemble:
+#    src: "{{ nbs_etc_directory }}/pxe"
+#    dest: "{{ nbs_etc_directory }}/dhcpd-pxe.conf"
+#
+###
+##- name: Create NFS exports file
+##  template:
+##    src: etc_exports
+##    dest: /etc/exports
+##  notify: restart nfs
+##  tags: nbs
+##
+- name: Create default menu for BIOS based systems
+  template:
+    src: pxelinux.cfg_default
+    dest: "{{ nbs_tftp }}/pxelinux.cfg/default"
+#
+#
+#
+## tftp
+#
+##- name: Ensure tftp root directory exists
+##  file:
+##    path: "{{ tftp_root_directory }}"
+##    state: directory
+##    owner: "{{ tftp_user }}"
+##    group: "{{ tftp_group }}"
+##    mode: "{{ tftp_mode }}"
+##    setype: "{{ tftp_setype }}"
+##  tags: tftp
+##
+##- name: Ensure SELinux boolean ‘tftp_anon_write’ has the desired value
+##  seboolean:
+##    name: tftp_anon_write
+##    state: "{{ tftp_anon_write }}"
+##    persistent: yes
+##  tags: tftp
+##
+##- name: Ensure SELinux boolean ‘tftp_home_dir’ has the desired value
+##  seboolean:
+##    name: tftp_home_dir
+##    state: "{{ tftp_home_dir }}"
+##    persistent: yes
+##  tags: tftp
+##
+##
+#- name: Ensure services are started
+#  service:
+#    name: "{{ item }}"
+#    state: started
+#    enabled: true
+#  with_items: "{{ nbs_services }}"
+#  tags: nbs
+#

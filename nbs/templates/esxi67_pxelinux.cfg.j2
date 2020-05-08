@@ -1,0 +1,9 @@
+MENU TITLE ESXi-6.7.0 Boot Menu
+NOHALT 1
+PROMPT 0
+TIMEOUT 300
+DEFAULT esxi67-interactive
+LABEL esxi67-interactive
+    KERNEL ../{{image}}/mboot.c32
+    APPEND -c ../{{image}}/boot.cfg ks=http://{{nbs_server_ip}}/{{image}}-{{name}}.ks
+    MENU LABEL ESXi-6.7 ^Interactive installer

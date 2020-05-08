@@ -1,0 +1,65 @@
+---
+
+
+- name: Create directories for boot images
+  file:
+    path: "{{ nbs_tftp }}/{{ item.osname }}_{{ item.osarch }}"
+    state: directory
+
+- name: Download isos
+  get_url:
+    url: "{{ item.osiso }}"
+    dest: "{{ nbs_iso }}/"
+  register: name
+
+- name: Create temporary directories for boot image mounts
+  file:
+    path: "/tmp/nbs/{{ item.osname }}_{{ item.osarch }}"
+    state: directory
+  
+- name: Mount the ISO file
+  mount:
+    path: "/tmp/nbs/{{ item.osname }}_{{ item.osarch }}"
+    src: "{{ name.dest }}"
+    fstype: "{{ item.osfstype | default('iso9660')}}"
+    opts: loop,ro
+    state: mounted
+
+- name: copy iso contents
+  synchronize:
+    src: "/tmp/nbs/{{ item.osname }}_{{ item.osarch }}"
+    dest: "{{ nbs_tftp }}/"
+
+- name: UnMount the ISO file
+  mount:
+    path: "/tmp/nbs/{{ item.osname }}_{{ item.osarch }}"
+    src: "{{ name.dest }}"
+    state: absent
+
+- name: Symlink the iso for web access
+  file:
+    src: "{{ nbs_tftp }}//{{ item.osname }}_{{ item.osarch }}"
+    dest: "{{ nbs_web }}/{{ item.osname }}_{{ item.osarch }}"
+    owner: root
+    group: root
+    state: link
+
+- name: fix the esxi boot config
+  shell:
+    cmd: sed -i -e "s/\///g" "{{ nbs_tftp }}/{{ item.osname }}_{{ item.osarch }}/boot.cfg"
+  when: item.ostype == 'vmware'
+
+- name: Build the subtype for the pxemenu build
+  template:
+    src: pxe_vmware.j2
+    dest: "{{ nbs_pxe }}/{{ idx.ostype }}/{{ idx.osname }}_{{ idx.osarch }}"
+    owner: root
+    group: root
+  loop: "{{ isos }}"
+  loop_control:
+    loop_var: idx
+
+- name: assemble vmware config
+  assemble:
+    src: "{{ nbs_pxe }}/vmware"
+    dest: "{{ nbs_pxe }}/pxelinux.cfg/vmware"

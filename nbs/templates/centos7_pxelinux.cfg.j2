@@ -1,0 +1,8 @@
+MENU TITLE Centos 7 Boot Menu
+NOHALT 1
+PROMPT 0
+TIMEOUT 300
+DEFAULT centos7
+LABEL centos7
+kernel {{image}}/images/pxeboot/vmlinuz
+append initrd={{image}}/images/pxeboot/initrd.img ip=dhcp hostname={{name}} ks=http://{{nbs_server_ip}}/{{image}}-{{name}}.ks

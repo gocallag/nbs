@@ -1,0 +1,68 @@
+vmaccepteula
+rootpw P@ssw0rd1!
+
+install --firstdisk=localesx,local --overwritevmfs
+network --bootproto=dhcp --device=vmnic0
+
+%post --interpreter=busybox
+# Wait 30 seconds until firstboot scripts have been copied before rebooting
+sleep 30;
+reboot
+
+%firstboot --interpreter=busybox
+
+vim-cmd hostsvc/enable_ssh
+vim-cmd hostsvc/start_ssh
+vim-cmd hostsvc/enable_esx_shell
+vim-cmd hostsvc/start_esx_shell
+esxcli system settings advanced set -o /UserVars/SuppressShellWarning -i 1
+
+# Get Network adapter information
+
+NetName="vmk0"
+
+# Get the IP address assigned by DHCP
+IPAddress=$(localcli network ip interface ipv4 get | grep "${NetName}" | awk '{print $2}')
+
+#Get the netmask assigned by DHCP
+NetMask=$(localcli network ip interface ipv4 get | grep "${NetName}" | awk '{print $3}')
+
+# Get the gateway provided by DHCP
+Gateway=$(localcli network ip interface ipv4 get | grep "${NetName}" | awk '{print $6}')
+DNS="10.0.255.254"
+
+# Get the hostname assigned thanks to reverse lookup zone
+FQDN="{{name}}"
+
+
+# set static IP + default route + DNS
+esxcli network ip interface ipv4 set --interface-name=vmk0 --ipv4=${IPAddress} --netmask=${NetMask} --type=static --gateway=${Gateway}
+esxcli network ip dns server add --server ${DNS}
+
+
+#Disable ipv6
+esxcli network ip set --ipv6-enabled=0
+
+
+# set suffix and FQDN host configuration
+esxcli system hostname set --fqdn=${FQDN}
+esxcli network ip dns search add --domain=${SuffixDNS}
+
+
+# NTP Configuration (thanks to http://www.virtuallyghetto.com)
+cat > /etc/ntp.conf << __NTP_CONFIG__
+restrict default kod nomodify notrap noquerynopeer
+restrict 127.0.0.1
+server 10.0.255.254 iburst
+__NTP_CONFIG__
+
+/sbin/chkconfig ntpd on
+
+
+# rename local datastore to something more meaningful
+vim-cmd hostsvc/datastore/rename datastore1 "Local - $(hostname -s)"
+
+
+# restart a last time
+reboot
+

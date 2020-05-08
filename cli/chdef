@@ -1,0 +1,24 @@
+#!/bin/bash
+for i in "$@"
+do
+  case $i in
+    -t=*|--type=*)
+	        TYPE="${i#*=}"
+		    ;;
+    -o=*|--object=*)
+	        OBJECT="${i#*=}"
+		    ;;
+    *)
+	        VALUE="${i#*=}"
+   ;;
+  esac
+done
+echo "$TYPE"
+echo "$OBJECT"
+echo "$ACTION"
+if [ "$TYPE" == "" ] || [ "$OBJECT" == "" ]; then
+	echo "Both -t=(type) and -o=(object) are required"
+	exit 1
+fi
+cd ..
+ansible-playbook -e "ttype=$TYPE oname=$OBJECT caction="$ACTION" driver=chdef" driver.yml

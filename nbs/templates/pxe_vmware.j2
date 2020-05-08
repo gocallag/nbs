@@ -1,0 +1,3 @@
+LABEL {{ idx.osname }}_{{ idx.osarch }}
+  KERNEL {{ idx.osname }}_{{ idx.osarch }}/mboot.c32 					
+  APPEND -c {{ idx.osname }}_{{ idx.osarch }}/boot.cfg

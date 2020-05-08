@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  gather_facts: true
+  become: true
+  connection: local
+  tasks:
+  - name: refresh nbs system
+    include_role:
+       name: nbs
+

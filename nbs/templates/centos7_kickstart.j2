@@ -1,0 +1,112 @@
+install
+lang en_AU.UTF-8
+keyboard us
+timezone Australia/Melbourne
+auth --useshadow --enablemd5
+selinux --disabled
+firewall --disabled
+services --enabled=NetworkManager,sshd
+eula --agreed
+ignoredisk --only-use=sda
+reboot
+%include /tmp/localconf.ks
+
+bootloader --location=mbr
+zerombr
+clearpart --all --initlabel
+part swap --asprimary --fstype="swap" --size=1024
+part /boot --fstype xfs --size=200
+part pv.01 --size=1 --grow
+volgroup rootvg01 pv.01
+logvol / --fstype xfs --name=lv01 --vgname=rootvg01 --size=1 --grow
+
+rootpw passw0rd
+
+url --url="http://{{nbs_server_ip}}/{{image}}/"
+
+%packages --nobase --ignoremissing
+@core --nodefaults
+-aic94xx-firmware*
+-alsa-*
+-biosdevname
+-btrfs-progs*
+-dhclient
+-dracut-network
+-iprutils
+-ivtv*
+-iwl*firmware
+-libertas*
+-kexec-tools
+-NetworkManager*
+-plymouth*
+-postfix
+%end
+
+%pre
+#!/bin/bash
+
+read -d '' readleases << 'EOF'
+/lease \{/ {
+    # clear array
+    delete lease
+    getline
+
+    while ($0 != "}")
+    {
+        sub(/;$/,"",$0)
+        switch ($1) {
+            case "option":
+                key=$2
+                $1=$2="";$0=$0;$1=$1
+                lease[key]=$0
+                break
+
+            default:
+                key=$1
+                $1="";$0=$0;$1=$1
+                lease[key]=$0
+                break
+        }
+        getline
+    }
+}
+
+END {
+    for (a in lease) {
+        gsub(/"/,"",lease[a])
+    }
+
+    hostname="{{name}}"
+    device=sprintf("--device=%s", lease["interface"])
+    gateway=sprintf("--gateway=%s", lease["routers"])
+    ip=sprintf("--ip=%s", lease["fixed-address"])
+    netmask=sprintf("--netmask=%s", lease["subnet-mask"])
+
+    split(lease["domain-name-servers"], dnsservers, ",")
+
+    for (a in dnsservers) {
+        nameserver=sprintf("%s --nameserver %s", nameserver, dnsservers[a])
+    }
+
+    if (todo == "host")
+        printf "network --hostname=%s\\n", hostname
+
+    if (todo == "interface")
+        printf "network --noipv6 --bootproto=static %s %s %s %s %s --onboot=yes\\n", ip, device, gateway, nameserver, netmask
+
+    if (todo == "ntp")
+        printf "timezone Australia/Melbourne --isUtc --ntpservers=%s\\n", lease["ntp-servers"]
+}
+EOF
+
+localconf=/tmp/localconf.ks
+
+cat > $localconf < /dev/null 2>&1
+
+for a in /var/lib/dhclient/dhclient*.lease
+do
+    awk -v todo="interface" "$readleases" $a >> $localconf
+    [[ -z $ntpdone ]] && awk -v todo="ntp" "$readleases" $a >> $localconf && ntpdone=true
+    [[ -z $hostdone ]] && awk -v todo="host" "$readleases" $a >> $localconf && hostdone=true
+done
+%end
