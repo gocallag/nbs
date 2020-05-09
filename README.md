@@ -9,5 +9,6 @@ Yes,  I use it in my lab environment, but i've tried / trying to make it as gene
 Builds Tested
 ESXi 6.7.0u3
 ESXi 7.0.0
+Centos 8.1
 
 Please note:  You cannot use a syslinux package > 4.0.8,  the default syslinux in centos 8 wont boot ESXI 6.7 and above
