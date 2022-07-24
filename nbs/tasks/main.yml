@@ -30,6 +30,11 @@
 - name: refresh iso's
   set_fact:
      refresh_iso: "{{ piso.stat.checksum != ciso.stat.checksum if true else false }}"
+  when: ciso.stat.exists == true and piso.stat.exists == true
+- name: refresh iso's
+  set_fact:
+     refresh_iso: false
+  when: ciso.stat.exists == false or piso.stat.exists == false
 
 - name: Refresh ISO's
   block:
