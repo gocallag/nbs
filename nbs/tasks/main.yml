@@ -1,6 +1,15 @@
 # roles/nbs/tasks/main.yml
 ---
 
+- name: create the required directory structure
+  file:
+    name: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/nbs
+    - /etc/nbs/state/isos
+    - /etc/nbs/vars
+
 - name: Assemble isos from fragments
   assemble:
      src: /etc/nbs/state/isos
