@@ -35,21 +35,30 @@
         nbs_shares:  '{{ nbs_root }}/shares'
         nbs_tftp:  '{{ nbs_root }}/tftp'
         nbs_pxe: "{{ nbs_root }}/tftp"
+        enable_web: false
+        enable_shares: false
+        enable_tftp: false
+        enable_pxe: false
+     owner: root
+     group: nbs
+     mode: 0770
   when: prefix is defined
 
 - name: include all the system vars
   include_vars:
       dir: "/etc/nbs/vars"
 
-- include_vars: "{{ item }}"
+- name: include distro vars
+  include_vars: "{{ item }}"
   with_first_found:
-    - "{{ ansible_distribution }}.yml"
-    - "{{ ansible_os_family }}.yml"
+    - "{{ ansible_distribution | lower}}.yml"
+    - "{{ ansible_os_family | lower }}.yml"
+  ignore_errors: true
 
 - name: Install packages
   package:
     name: "{{ item }}"
-    state: installed
+    state: latest
   with_items: "{{ nbs_packages }}"
 
 - name: Create directory for PXEboot related files
@@ -91,57 +100,57 @@
   with_items: 
     - "isos"
 
-- name: Install XINETD TFTP configuration file
-  template:
-    dest: "{{ nbs_tftp_config }}"
-    src: etc_xinetd.d_tftp.j2
-
-- name: force restart of xinetd
-  service:
-     name: xinetd
-     state: restarted
-
-- name: Set config directory perms for DHCP
-  file:
-    path: "{{ nbs_dhcp_config | dirname }}"
-    state: directory
-    mode: 0755
-
-- name: Install DHCP config file for NBS
-  template:
-    src: etc_dhcp_dhcpd.conf.j2
-    dest: "{{ nbs_dhcp_config }}"
-    owner: root
-    group: root
-    mode: 0644
-    validate: 'dhcpd -t -cf %s'
-
-- name: DHCP configuration for PXE server
-  template:
-    src: etc_dhcp_dhcpd-pxelinux.conf.j2
-    dest: '{{ nbs_etc }}/pxe/base-dhcpd-pxe.conf'
-    owner: root
-    group: root
-    mode: '0600'
-
-- name: Load PXELinux DHCP configuration from main DHCP config file
-  lineinfile:
-    dest: /etc/dhcp/dhcpd.conf
-    line: 'include "{{ nbs_etc }}/dhcpd-pxe.conf";'
-
-- name: assemble pxe config
-  assemble:
-    src: "{{ nbs_etc }}/pxe"
-    dest: "{{ nbs_etc }}/dhcpd-pxe.conf"
-  notify: restart dhcp
-
-- name: force restart of dhcpd
-  service:
-     name: dhcpd
-     state: restarted
-
-- name: Make Network Boot Programs for BIOS and UEFI based systems available
-  command: cp "{{ item }}" "{{ nbs_pxe }}/{{ item|regex_replace('.*/', '') }}"
-  args:
-    creates: "{{ nbs_pxe }}/{{ item|regex_replace('.*/', '') }}"
-  with_items: "{{ nbs_pxeserver_files }}"
+#- name: Install XINETD TFTP configuration file
+#  template:
+#    dest: "{{ nbs_tftp_config }}"
+#    src: etc_xinetd.d_tftp.j2
+#
+#- name: force restart of xinetd
+#  service:
+#     name: xinetd
+#     state: restarted
+#
+#- name: Set config directory perms for DHCP
+#  file:
+#    path: "{{ nbs_dhcp_config | dirname }}"
+#    state: directory
+#    mode: 0755
+#
+#- name: Install DHCP config file for NBS
+#  template:
+#    src: etc_dhcp_dhcpd.conf.j2
+#    dest: "{{ nbs_dhcp_config }}"
+#    owner: root
+#    group: root
+#    mode: 0644
+#    validate: 'dhcpd -t -cf %s'
+#
+#- name: DHCP configuration for PXE server
+#  template:
+#    src: etc_dhcp_dhcpd-pxelinux.conf.j2
+#    dest: '{{ nbs_etc }}/pxe/base-dhcpd-pxe.conf'
+#    owner: root
+#    group: root
+#    mode: '0600'
+#
+#- name: Load PXELinux DHCP configuration from main DHCP config file
+#  lineinfile:
+#    dest: /etc/dhcp/dhcpd.conf
+#    line: 'include "{{ nbs_etc }}/dhcpd-pxe.conf";'
+#
+#- name: assemble pxe config
+#  assemble:
+#    src: "{{ nbs_etc }}/pxe"
+#    dest: "{{ nbs_etc }}/dhcpd-pxe.conf"
+#  notify: restart dhcp
+#
+#- name: force restart of dhcpd
+#  service:
+#     name: dhcpd
+#     state: restarted
+#
+#- name: Make Network Boot Programs for BIOS and UEFI based systems available
+#  command: cp "{{ item }}" "{{ nbs_pxe }}/{{ item|regex_replace('.*/', '') }}"
+#  args:
+#    creates: "{{ nbs_pxe }}/{{ item|regex_replace('.*/', '') }}"
+#  with_items: "{{ nbs_pxeserver_files }}"
