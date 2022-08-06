@@ -29,6 +29,7 @@
      dest: "/etc/nbs/vars/00root.yml"
      content: |
         nbs_root: "{{ prefix }}"
+        nbs_src:  "{{ nbs_root }}/src"
         nbs_iso:  '{{ nbs_root }}/iso'
         nbs_etc:  '{{ nbs_root }}/etc'
         nbs_web:  '{{ nbs_root }}/www'
@@ -67,12 +68,14 @@
     state: directory
   with_items: 
     - "{{ nbs_root }}"
+    - "{{ nbs_src }}"
     - "{{ nbs_iso }}"
     - "{{ nbs_etc }}"
     - "{{ nbs_etc }}/pxe"
     - "{{ nbs_web }}"
     - "{{ nbs_shares }}"
     - "{{ nbs_tftp }}"
+    - "{{ nbs_src }}/ipxe"
     - "{{ nbs_pxe }}/pxelinux.cfg"
     - "{{ nbs_pxe }}/vmware"
     - "{{ nbs_pxe }}/windows"
@@ -154,3 +157,33 @@
 #  args:
 #    creates: "{{ nbs_pxe }}/{{ item|regex_replace('.*/', '') }}"
 #  with_items: "{{ nbs_pxeserver_files }}"
+
+- name: Check out latest iPXE sources
+  ansible.builtin.git:
+    repo: "https://github.com/ipxe/ipxe"
+    dest: "{{ nbs_src }}/ipxe"
+    version: "master"
+    force: true
+  register: checkout
+# should make sure this works
+
+- name: More often than not iPXE compile complains if these local config files dont exist, so create them
+  ansible.builtin.file:
+    path: "{{ nbs_src }}/ipxe/{{ item }}"
+    state: touch
+  with_items:
+    - src/config/local/umalloc.h
+    - src/config/local/nap.h
+    - src/config/local/timer.h
+    - src/config/local/branding.h
+    - src/config/local/serial.h
+    - src/config/local/reboot.h
+    - src/config/local/sanboot.h
+    - src/config/local/fault.h
+    - src/config/local/dhcp.h
+    - src/config/local/sideband.h
+    - src/config/local/entropy.h
+    - src/config/local/crypto.h
+    - src/config/local/usb.h
+    - src/config/local/settings.h
+

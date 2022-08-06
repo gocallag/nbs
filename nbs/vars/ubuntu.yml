@@ -13,6 +13,17 @@ nbs_packages:
   - tftp-server
   - xinetd
   - samba
+  - binutils-dev
+  - dosfstools
+  - build-essential
+  - genisoimage
+  - git
+  - isolinux
+  - liblzma-dev
+  - libslirp-dev
+  - syslinux
+  - syslinux-common
+
 
 #nbs_services:
 #  - smb
