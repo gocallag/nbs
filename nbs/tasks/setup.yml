@@ -49,6 +49,9 @@
   include_vars:
       dir: "/etc/nbs/vars"
 
+- debug: var=ansible_distribution
+- debug: var=ansible_os_family
+
 - name: include distro vars
   include_vars: "{{ item }}"
   with_first_found:
