@@ -2,5 +2,5 @@
 ---
 
 nbs_tftp_server_args: "--secure"
-
+nbs_tftp: /srv/nbs/tftp
 
