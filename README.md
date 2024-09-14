@@ -6,3 +6,9 @@ It is a set of cli scripts  and ansible playbooks that turns a almalinux 9 syste
 
 Yes,  I use it in my lab environment, but i've tried / trying to make it as generic as possible.
 
+dnf install -y epel-release
+crb enable
+
+dnf install -y ansible
+
+./cli/initsys
