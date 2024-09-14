@@ -11,7 +11,7 @@
     state: directory
     owner: root
     group: nbs
-    mode: 0770
+    mode: 0775
   with_items: 
     - "/etc/nbs"
     - "/etc/nbs/vars"
@@ -42,7 +42,7 @@
         enable_pxe: false
      owner: root
      group: nbs
-     mode: 0770
+     mode: 0775
   when: prefix is defined
 
 - name: include all the system vars
@@ -91,7 +91,7 @@
     force: yes
     group: nbs
     owner: root
-    mode: 0770
+    mode: 0775
   with_items: 
     - "isos"
 
@@ -102,7 +102,7 @@
     force: yes
     group: nbs
     owner: root
-    mode: 0770
+    mode: 0775
   with_items: 
     - "isos"
 
