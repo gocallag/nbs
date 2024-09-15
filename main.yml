@@ -3,8 +3,23 @@
   gather_facts: true
   become: true
   connection: local
-  tasks:
-  - name: refresh nbs system
-    include_role:
-       name: nbs
+  vars:
+     prefix: /srv/nbs
 
+  tasks:
+  - name: include all the system vars
+    include_vars:
+        dir: "/etc/nbs/vars"
+    ignore_errors: true
+    register: state
+  - block:
+    - include_role:
+         name: nbs
+         tasks_from: setup-vars.yml
+    - debug: msg="Please update the configuration in /etc/nbs/vars/00root.yml and re-run"
+    - meta: end_play  
+    when: state.failed == true
+  - name: setup the system as per the configuration   
+    include_role:
+         name: nbs
+         tasks_from: setup.yml
