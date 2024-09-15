@@ -1,0 +1,77 @@
+---
+- name: Ensure group "nbs" exists
+  group:
+     name: nbs
+     state: present
+- name: Create the seed system config file
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: nbs
+    mode: 0775
+  with_items: 
+    - "/etc/nbs"
+    - "/etc/nbs/vars"
+    - "/etc/nbs/state"
+    - "/etc/nbs/state/nodes"
+    - "/etc/nbs/state/site"
+    - "/etc/nbs/state/isos"
+
+- name: set prefix
+  set_fact:
+     nbs_root: "{{ prefix }}"
+
+- name: set nbs root
+  copy:
+     dest: "/etc/nbs/vars/00root.yml"
+     content: |
+        pxe_server_name: pxe-server
+        pxe_server_ip: nnn.nnn.nnn.nnn
+        httpd_server_ip: nnn.nnn.nnn.nnn
+        domain_name: domain-name
+        domain_name_servers: "nnn.nnn.nnn.nnn"
+        gateway_router_ip: nnn.nnn.nnn.nnn
+        ntp_server_ip: nnn.nnn.nnn.nnn
+        dhcp_subnet: nnn.nnn.nnn.0
+        dhcp_netmask: 255.255.255.0
+        dhcp_range_start: nnn.nnn.nnn.nnn
+        dhcp_range_end: nnn.nnn.nnn.nnn
+        nbs_root: "{{ prefix }}"
+        nbs_src:  "{{ nbs_root }}/src"
+        nbs_iso:  '{{ nbs_root }}/iso'
+        nbs_etc:  '{{ nbs_root }}/etc'
+        nbs_web:  '{{ nbs_root }}/www'
+        nbs_shares:  '{{ nbs_root }}/shares'
+        nbs_tftp:  '{{ nbs_root }}/tftp'
+        nbs_pxe: "{{ nbs_root }}/tftp"
+        enable_web: true
+        enable_shares: true
+        enable_tftp: true
+        enable_dhcpd: true
+        enable_pxe: true
+     owner: root
+     group: nbs
+     mode: 0775
+  when: prefix is defined
+- name: ensure base variable files exist
+  copy:
+    content: "---\n{{ item }}:\n"
+    dest: "/etc/nbs/state/{{ item }}/00"
+    force: yes
+    group: nbs
+    owner: root
+    mode: 0775
+  with_items: 
+    - "isos"
+
+- name: ensure base nbs var files exist
+  copy:
+    content: "---\n{{ item }}:\n"
+    dest: "/etc/nbs/vars/{{ item }}.yml"
+    force: yes
+    group: nbs
+    owner: root
+    mode: 0775
+  with_items: 
+    - "isos"

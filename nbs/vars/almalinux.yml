@@ -38,4 +38,4 @@ nbs_pxeserver_files:
 
 nbs_dhcp_config_dir: /etc/dhcp
 nbs_dhcp_config: /etc/dhcp/dhcpd.conf
-# nbs_tftp_config: /etc/xinetd.d/tftp
+
