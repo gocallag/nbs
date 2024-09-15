@@ -19,13 +19,16 @@ nbs_packages:
   - unzip
   - nmap
   - syslinux
+  - vsftpd
 
 nbs_services:
   - smb
   - rpcbind
   - nfs-server
-  - dhcpd
-  - xinetd
+  - dhcp-server
+  - tftp-server
+  - vsftpd
+  - httpd
 
 
 nbs_pxeserver_files:
@@ -35,5 +38,4 @@ nbs_pxeserver_files:
 
 nbs_dhcp_config_dir: /etc/dhcp
 nbs_dhcp_config: /etc/dhcp/dhcpd.conf
-nbs_tftp_config: /etc/xinetd.d/tftp
-
+# nbs_tftp_config: /etc/xinetd.d/tftp
