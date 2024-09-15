@@ -1,8 +1,0 @@
-option arch code 93 = unsigned integer 16; # RFC4578
-
-class "pxeclients" {
-  match if substring (option vendor-class-identifier, 0, 9) = "PXEClient";
-  next-server {{ nbs_server_ip }};
-  filename "/pxelinux.0";
-}
-
