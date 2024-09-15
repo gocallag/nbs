@@ -28,6 +28,17 @@
   copy:
      dest: "/etc/nbs/vars/00root.yml"
      content: |
+        pxe_server_name: pxe-server
+        pxe_server_ip: nnn.nnn.nnn.nnn
+        httpd_server_ip: nnn.nnn.nnn.nnn
+        domain_name: domain-name
+        domain_name_servers: "nnn.nnn.nnn.nnn"
+        gateway_router_ip: nnn.nnn.nnn.nnn
+        ntp_server_ip: nnn.nnn.nnn.nnn
+        dhcp_subnet: nnn.nnn.nnn.0
+        dhcp_netmask: 255.255.255.0
+        dhcp_range_start: nnn.nnn.nnn.nnn
+        dhcp_range_end: nnn.nnn.nnn.nnn
         nbs_root: "{{ prefix }}"
         nbs_src:  "{{ nbs_root }}/src"
         nbs_iso:  '{{ nbs_root }}/iso'
@@ -36,10 +47,10 @@
         nbs_shares:  '{{ nbs_root }}/shares'
         nbs_tftp:  '{{ nbs_root }}/tftp'
         nbs_pxe: "{{ nbs_root }}/tftp"
-        enable_web: false
-        enable_shares: false
-        enable_tftp: false
-        enable_pxe: false
+        enable_web: true
+        enable_shares: true
+        enable_tftp: true
+        enable_pxe: true
      owner: root
      group: nbs
      mode: 0775

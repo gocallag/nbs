@@ -12,3 +12,5 @@ crb enable
 dnf install -y ansible
 
 ./cli/initsys
+
+edit /etc/nbs/vars/00root.yml and set config required
